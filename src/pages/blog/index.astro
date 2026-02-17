@@ -1,0 +1,49 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import PostCard from "../../components/PostCard.astro";
+import Search from "../../components/Search";
+import { getPosts } from "../../lib/blogger";
+
+const posts = await getPosts();
+
+// Formatação de data para os cards
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+};
+---
+
+<Layout title="Blog | Jovem Cristão">
+  <main class="max-w-6xl mx-auto px-6 pt-32 pb-20">
+    <header class="mb-16 text-center">
+      <h1 class="text-4xl sm:text-6xl font-black text-text mb-4">
+        Reflexões & <span class="text-text">Código</span>
+      </h1>
+      <p class="text-text-muted text-lg max-w-2xl mx-auto">
+        Explorando a fé cristã e a tecnologia em um mundo hiperconectado.
+      </p>
+    </header>
+
+    <div class="mb-10">
+      <Search client:load posts={posts} />
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {posts.map((post) => (
+        <PostCard 
+          slug={`/blog/${post.slug}`}
+          title={post.title}
+          description={post.description}
+          image={post.image}
+          date={post.date}
+          labels={(post as any).labels || []}
+        />
+      ))}
+    </div>
+
+    
+  </main>
+</Layout>

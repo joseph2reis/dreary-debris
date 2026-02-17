@@ -1,0 +1,72 @@
+---
+import ThemeToggle from "../ThemeToggle";
+import SearchCompact from "../SearchCompact";
+import { getPosts } from "../../lib/blogger";
+
+// Header.astro
+const posts = await getPosts();
+const menuItems = [
+  { label: "Início", href: "/" },
+  { label: "Blog", href: "/blog" },
+  { label: "Sobre", href: "/sobre" },
+  { label: "Versículos", href: "/versiculos" },
+];
+
+const pathname = new URL(Astro.request.url).pathname;
+// Lógica para marcar ativo mesmo em subpáginas (ex: /blog/post-1)
+const currentPath = pathname.endsWith("/") ? pathname : `${pathname}/`;
+---
+
+<header
+  class="sticky top-0 z-50 border-b border-border bg-surface/80 backdrop-blur-md"
+>
+  <div class="mx-auto flex max-w-5xl items-center justify-between p-4 px-6">
+    <a href="/" class="group text-xl font-bold text-text transition">
+      Jovem <span
+        class="text-primary group-hover:text-primary-dark transition-colors"
+        >Cristão</span
+      >
+    </a>
+
+    <nav class="flex gap-8 text-sm font-medium items-center">
+      {
+        menuItems.map((item) => {
+          // Verifica se o href do item coincide com o início da URL atual
+          const isActive =
+            item.href === "/"
+              ? pathname === "/"
+              : pathname.startsWith(item.href);
+
+          return (
+            <a
+              href={item.href}
+              class:list={[
+                "relative py-1 transition-colors duration-200",
+                { "text-primary": isActive },
+                { "text-text-muted hover:text-text": !isActive },
+              ]}
+            >
+              {item.label}
+              {isActive && (
+                <span class="absolute inset-x-0 -bottom-1 h-0.5 bg-primary" />
+              )}
+            </a>
+          );
+        })
+      }
+
+      <div class="hidden md:block">
+        <SearchCompact client:load posts={posts} />
+      </div>
+
+      <ThemeToggle client:load />
+    </nav>
+  </div>
+</header>
+
+<style>
+  a[aria-current="page"] {
+    outline: 2px solid transparent;
+    outline-offset: 4px;
+  }
+</style>

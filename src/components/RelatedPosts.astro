@@ -1,0 +1,44 @@
+---
+import PostCard from "./PostCard.astro";
+
+interface Props {
+  currentId: string;
+  posts: any[];
+}
+
+const { currentId, posts } = Astro.props as Props;
+
+// calcula similaridade por labels (interseção)
+function score(a: any, b: any) {
+  const la = new Set((a.labels || []).map((s: string) => s.toLowerCase()));
+  const lb = new Set((b.labels || []).map((s: string) => s.toLowerCase()));
+  let common = 0;
+  for (const x of la) if (lb.has(x)) common++;
+  return common;
+}
+
+const candidates = posts
+  .filter((p) => p.id !== currentId)
+  .map((p) => ({ post: p, s: score(p, posts.find((x: any) => x.id === currentId) || {}) }))
+  .sort((a, b) => b.s - a.s)
+  .slice(0, 3)
+  .map((x) => x.post);
+---
+
+{candidates.length > 0 && (
+  <section class="mt-16">
+    <h3 class="text-2xl font-bold text-text mb-6">Leituras relacionadas</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {candidates.map((p) => (
+        <PostCard
+          slug={`/blog/${p.slug}`}
+          title={p.title}
+          description={p.description}
+          image={p.image}
+          date={p.date}
+          labels={p.labels || []}
+        />
+      ))}
+    </div>
+  </section>
+)}

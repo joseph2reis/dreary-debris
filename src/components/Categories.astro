@@ -1,0 +1,72 @@
+---
+import { getPosts } from "../lib/blogger";
+import { Code2, BookOpen, Rocket, Lightbulb, Tag, Hash } from 'lucide-astro';
+
+const posts = await getPosts();
+
+// Compila lista única de labels com contagem
+const labelCounts = new Map<string, number>();
+for (const p of posts) {
+  const labels = (p as any).labels || [];
+  for (const l of labels) {
+    labelCounts.set(l, (labelCounts.get(l) || 0) + 1);
+  }
+}
+
+const labels = Array.from(labelCounts.entries())
+  .map(([label, count]) => ({ label, count }))
+  .sort((a, b) => b.count - a.count);
+
+// mapa simples de ícones e cor por label conhecida
+const iconMap: Record<string, any> = {
+  tecnologia: Code2,
+  tech: Code2,
+  fe: BookOpen,
+  'fé': BookOpen,
+  carreira: Rocket,
+  reflexoes: Lightbulb,
+  leitura: BookOpen,
+};
+
+const colorMap: Record<string, string> = {
+  tecnologia: 'text-blue-500',
+  tech: 'text-blue-500',
+  fe: 'text-purple-500',
+  'fé': 'text-purple-500',
+  carreira: 'text-orange-500',
+  reflexoes: 'text-yellow-500',
+  leitura: 'text-teal-500',
+};
+---
+
+<section class="py-16">
+  <div class="flex items-center justify-between mb-10">
+    <h2 class="text-3xl font-black text-text">Explorar por temas</h2>
+    <a href="/blog" class="text-sm font-bold text-primary hover:underline">Ver todos os posts</a>
+  </div>
+
+  <div class="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4">
+    {labels.map((item) => {
+      const key = item.label.toLowerCase();
+      const Icon = iconMap[key] || Tag;
+      const colorClass = colorMap[key] || 'text-primary';
+      return (
+        <a
+          href={`/blog/tag/${encodeURIComponent(item.label)}`}
+          class="group flex items-center gap-3 p-4 rounded-2xl bg-surface border border-border transition hover:shadow-md"
+        >
+          <div class={`flex-none rounded-md bg-background px-3 py-2 text-sm font-semibold text-text-muted`}>
+            <Icon size={20} class={`inline-block ${colorClass}`} />
+          </div>
+
+          <div class="grow text-left">
+            <div class="font-bold text-text">{item.label}</div>
+            <div class="text-xs text-text-muted">{item.count} post(s)</div>
+          </div>
+
+          <div class="flex-none text-primary">→</div>
+        </a>
+      );
+    })}
+  </div>
+</section>

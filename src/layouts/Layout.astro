@@ -1,0 +1,80 @@
+---
+import { ClientRouter } from "astro:transitions";
+import Header from "../components/layouts/Header.astro";
+import Footer from "../components/layouts/Footer.astro";
+import "../styles/global.css";
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <meta name="description" content="Explorando a interseção entre fé, tecnologia e o estilo de vida de uma nova geração. Aqui, o código e o propósito caminham juntos." />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content="Explorando a interseção entre fé, tecnologia e o estilo de vida de uma nova geração. Aqui, o código e o propósito caminham juntos." />
+    <meta property="og:image" content="/og-image.jpg" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content="Explorando a interseção entre fé, tecnologia e o estilo de vida de uma nova geração. Aqui, o código e o propósito caminham juntos." />
+    <meta name="twitter:image" content="/og-image.jpg" />
+    <script is:inline>
+      const applyTheme = () => {
+        const theme = (() => {
+          if (
+            typeof localStorage !== "undefined" &&
+            localStorage.getItem("theme")
+          ) {
+            return localStorage.getItem("theme");
+          }
+          if (window.matchMedia("(prefers-color-scheme: light)").matches) {
+            return "light";
+          }
+          return "dark";
+        })();
+
+        if (theme === "light") {
+          document.documentElement.classList.add("light");
+        } else {
+          document.documentElement.classList.remove("light");
+        }
+      };
+
+      // Roda no carregamento inicial
+      applyTheme();
+
+      // Roda toda vez que o Astro trocar de página via ClientRouter
+      document.addEventListener("astro:after-swap", applyTheme);
+    </script>
+  </head>
+
+  <body class="bg-bg">
+    <!-- liga o roteamento inteligente -->
+    <ClientRouter />
+
+    <!-- componente global -->
+    <Header transition:persist />
+
+    <!-- conteúdo que troca -->
+    <main class="min-h-screen">
+      <slot />
+    </main>
+
+    <Footer />
+  </body>
+</html>
+
+<style>
+  html,
+  body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+  }
+</style>

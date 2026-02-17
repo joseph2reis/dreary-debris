@@ -1,0 +1,88 @@
+---
+// BlogProse.astro
+---
+
+<article
+  class="prose dark:prose-invert max-w-none
+  prose-headings:text-[--color-text] prose-headings:font-bold prose-headings:scroll-mt-20 prose-headings:tracking-tight
+  prose-p:text-[--color-text] prose-p:leading-relaxed prose-p:mb-6
+  prose-strong:text-[--color-text] prose-strong:font-semibold
+  prose-blockquote:border-l-4 prose-blockquote:border-[--color-primary] prose-blockquote:bg-[--color-surface] prose-blockquote:p-4 prose-blockquote:rounded-r prose-blockquote:italic prose-blockquote:text-[--color-text-muted]
+  prose-a:text-[--color-primary] hover:prose-a:text-[--color-primary-hover] prose-a:underline
+  prose-hr:border-[--color-border] prose-hr:my-10"
+>
+  <div class="blogger-content">
+    <slot />
+  </div>
+</article>
+
+<style is:global>
+  @reference "../styles/global.css";
+
+  /* 1. COMPORTAMENTO DE FLOATS (IMAGEM AO LADO DO TEXTO) */
+  .blogger-content .tr-caption-container[style*="float: right"],
+  .blogger-content div[style*="float: right"],
+  .blogger-content table[style*="float: right"] {
+    @apply float-right! ml-6! mb-4! max-w-[50%]!;
+  }
+
+  .blogger-content .tr-caption-container[style*="float: left"],
+  .blogger-content div[style*="float: left"],
+  .blogger-content table[style*="float: left"] {
+    @apply float-left! mr-6! mb-4! max-w-[50%]!;
+  }
+
+  /* 2. CORREÇÃO DE LISTAS (VOLTANDO COM AS BOLINHAS) */
+  .blogger-content ul {
+    @apply list-disc! pl-6! ml-2! my-5! block!;
+  }
+
+  .blogger-content ol {
+    @apply list-decimal! pl-6! ml-2! my-5! block!;
+  }
+
+  .blogger-content li {
+    @apply list-item! mb-2!;
+  }
+
+  .blogger-content li::marker {
+    @apply text-[--color-primary];
+  }
+
+  /* 3. CAPITULAR (LETRA INICIAL GRANDE) */
+  .blogger-content span[style*="font-size: large"]:first-of-type {
+    @apply float-left! text-6xl! font-black! text-[--color-primary]! mr-3! mt-1! leading-[0.7]!;
+    font-family: serif;
+  }
+
+  /* 4. TÍTULOS E IMAGENS */
+  .blogger-content h2 {
+    @apply text-3xl! mt-12! mb-6! font-bold! text-[--color-text]! pb-2! clear-both!;
+    position: relative;
+  }
+
+  .blogger-content .tr-caption-container {
+    @apply border border-[--color-border] bg-[--color-surface] p-2 rounded-xl text-center;
+  }
+
+  .prose .blogger-content h1,
+  .prose .blogger-content h2,
+  .prose .blogger-content h3,
+  .prose .blogger-content h4,
+  .prose .blogger-content h5,
+  .prose .blogger-content h6,
+  .prose .blogger-content div {
+    color: var(--color-text) !important;
+  }
+
+  .prose .blogger-content p,
+  .prose .blogger-content span,
+  .prose .blogger-content li {
+    color: var(--color-text-muted);
+  }
+
+  /* links */
+  .prose .blogger-content a {
+    color: var(--color-primary) !important;
+  }
+</style>
