@@ -11,7 +11,6 @@
   "dependencies": {
     "@astrojs/react": "^4.4.2",
     "@astrojs/sitemap": "^3.7.0",
-    "@giscus/react": "^3.1.0",
     "@tailwindcss/vite": "^4.1.18",
     "@types/react": "^19.2.13",
     "@types/react-dom": "^19.2.3",
@@ -19,6 +18,7 @@
     "fuse.js": "^7.1.0",
     "ioredis": "^5.9.3",
     "lucide-astro": "^0.556.0",
+    "lucide-react": "^0.575.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "tailwindcss": "^4.1.18"

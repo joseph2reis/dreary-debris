@@ -27,7 +27,7 @@ export default function Search({ posts }: { posts: Post[] }) {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Buscar posts..."
-          className="flex-auto rounded-full border border-border bg-background px-4 py-2 text-text focus:ring-2 focus:ring-primary"
+          className="flex-auto rounded-full border border-border bg-background px-4 py-2 text-text focus:ring-2 focus:ring-primary outline-none"
           aria-label="Buscar posts"
         />
       </div>

@@ -3,8 +3,8 @@ import ThemeToggle from "../ThemeToggle";
 import SearchCompact from "../SearchCompact";
 import { getPosts } from "../../lib/blogger";
 
-// Header.astro
 const posts = await getPosts();
+
 const menuItems = [
   { label: "Início", href: "/" },
   { label: "Blog", href: "/blog" },
@@ -13,25 +13,29 @@ const menuItems = [
 ];
 
 const pathname = new URL(Astro.request.url).pathname;
-// Lógica para marcar ativo mesmo em subpáginas (ex: /blog/post-1)
-const currentPath = pathname.endsWith("/") ? pathname : `${pathname}/`;
 ---
 
 <header
   class="sticky top-0 z-50 border-b border-border bg-surface/80 backdrop-blur-md"
 >
-  <div class="mx-auto flex max-w-5xl items-center justify-between p-4 px-6">
-    <a href="/" class="group text-xl font-bold text-text transition">
-      Jovem <span
-        class="text-primary group-hover:text-primary-dark transition-colors"
-        >Cristão</span
-      >
+  <div class="mx-auto flex max-w-6xl items-center justify-between  p-4 px-6">
+    <!-- Botão Mobile -->
+    <button
+      id="menu-button"
+      class="lg:hidden text-2xl flex items-center justify-center p-2 text-text left-6"
+      aria-label="Abrir menu"
+    >
+      ☰
+    </button>
+
+    <a href="/" class="text-xl font-bold text-text text-center">
+      Jovem <span class="text-primary">Cristão</span>
     </a>
 
-    <nav class="flex gap-8 text-sm font-medium items-center">
+    <!-- Menu Desktop -->
+    <nav class="hidden lg:flex gap-8 text-sm font-medium items-center">
       {
         menuItems.map((item) => {
-          // Verifica se o href do item coincide com o início da URL atual
           const isActive =
             item.href === "/"
               ? pathname === "/"
@@ -54,19 +58,72 @@ const currentPath = pathname.endsWith("/") ? pathname : `${pathname}/`;
           );
         })
       }
-
-      <div class="hidden md:block">
+    </nav>
+    
+      <div class="w-1/3 hidden md:block">
         <SearchCompact client:load posts={posts} />
       </div>
-
-      <ThemeToggle client:load />
-    </nav>
+      <div>
+        <ThemeToggle client:load />
+      </div>
+    
   </div>
 </header>
 
-<style>
-  a[aria-current="page"] {
-    outline: 2px solid transparent;
-    outline-offset: 4px;
+<!-- Overlay -->
+<div id="overlay" class="fixed inset-0 bg-black/50 hidden z-40"></div>
+
+<!-- Menu Mobile Lateral -->
+<aside
+  id="mobile-menu"
+  class="fixed top-0 left-0 h-full w-64 bg-surface-solid border-r border-border transform -translate-x-full transition-transform duration-300 z-50 p-6"
+>
+  <div class="flex justify-between items-center mb-8">
+    <h2 class="text-lg font-bold text-text">Menu</h2>
+    <button id="close-menu">✕</button>
+  </div>
+
+  <nav class="flex flex-col gap-6">
+    <div class="w-full">
+      <SearchCompact client:load posts={posts} />
+    </div>
+    {
+      menuItems.map((item) => (
+        <a
+          href={item.href}
+          class="text-text hover:text-primary transition-colors"
+        >
+          {item.label}
+        </a>
+      ))
+    }
+
+  </nav>
+</aside>
+
+<script>
+  function initMobileMenu() {
+    const menuButton = document.getElementById("menu-button");
+    const mobileMenu = document.getElementById("mobile-menu");
+    const overlay = document.getElementById("overlay");
+    const closeMenu = document.getElementById("close-menu");
+
+    function openMenu() {
+      mobileMenu?.classList.remove("-translate-x-full");
+      overlay?.classList.remove("hidden");
+      document.body.classList.add("overflow-hidden");
+    }
+
+    function closeMenuFn() {
+      mobileMenu?.classList.add("-translate-x-full");
+      overlay?.classList.add("hidden");
+      document.body.classList.remove("overflow-hidden");
+    }
+
+    menuButton?.addEventListener("click", openMenu);
+    closeMenu?.addEventListener("click", closeMenuFn);
+    overlay?.addEventListener("click", closeMenuFn);
   }
-</style>
+
+  document.addEventListener("astro:page-load", initMobileMenu);
+</script>

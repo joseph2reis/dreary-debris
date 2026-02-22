@@ -5,7 +5,7 @@ import { getPosts, getPost } from "../../lib/blogger";
 import type { Post } from "../../lib/blogger";
 import ProseContent from "../../components/BlogProse.astro";
 import RelatedPosts from "../../components/RelatedPosts.astro";
-import Giscus from '@giscus/react';
+import Comments from "../../components/Comments.astro";
 
 export async function getStaticPaths() {
   const posts = await getPosts();
@@ -23,26 +23,21 @@ if (!post) return Astro.redirect("/404");
 const typedPost: Post = post as Post;
 
 // Use publishedAt (ISO) quando disponível; fallback para `date` ou agora
-const publishedAt = typedPost.publishedAt || (typedPost as any).published || new Date().toISOString();
+const publishedAt =
+  typedPost.publishedAt ||
+  (typedPost as any).published ||
+  new Date().toISOString();
 const parsed = new Date(publishedAt);
 const date = isNaN(parsed.getTime())
   ? ""
-  : parsed.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  : parsed.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
 
-// Giscus configuration from env
-const GISCUS_REPO = import.meta.env.GISCUS_REPO || '';
-const GISCUS_REPOSITORY_ID = import.meta.env.GISCUS_REPOSITORY_ID || '';
-const GISCUS_CATEGORY = import.meta.env.GISCUS_CATEGORY || '';
-const GISCUS_CATEGORY_ID = import.meta.env.GISCUS_CATEGORY_ID || '';
-const GISCUS_MAPPING = import.meta.env.GISCUS_MAPPING || 'pathname';
-const GISCUS_REACTIONS = import.meta.env.GISCUS_REACTIONS || '1';
-const GISCUS_EMIT_METADATA = import.meta.env.GISCUS_EMIT_METADATA || '0';
-// Convert known string flags to booleans for the React component
-const GISCUS_REACTIONS_BOOL = GISCUS_REACTIONS === '1' || GISCUS_REACTIONS === 'true';
-const GISCUS_EMIT_METADATA_BOOL = GISCUS_EMIT_METADATA === '1' || GISCUS_EMIT_METADATA === 'true';
-const GISCUS_INPUT_POSITION = import.meta.env.GISCUS_INPUT_POSITION || 'bottom';
-const GISCUS_THEME = import.meta.env.GISCUS_THEME || 'preferred_color_scheme';
-const GISCUS_LANG = import.meta.env.GISCUS_LANG || 'pt-BR';
+const SITE_URL = import.meta.env.SITE_URL || "";
+
 ---
 
 <BaseLayout
@@ -102,29 +97,6 @@ const GISCUS_LANG = import.meta.env.GISCUS_LANG || 'pt-BR';
 
     <RelatedPosts currentId={typedPost.id} posts={await getPosts()} />
 
-    <!-- Giscus React component -->
-    {GISCUS_REPO && GISCUS_REPO !== 'owner/repo' ? (
-      <section class="mt-12">
-        <div id="giscus_container">
-          <Giscus
-            client:load
-            repo={GISCUS_REPO}
-            repoId={GISCUS_REPOSITORY_ID}
-            category={GISCUS_CATEGORY}
-            categoryId={GISCUS_CATEGORY_ID}
-            mapping={GISCUS_MAPPING}
-            reactionsEnabled={GISCUS_REACTIONS_BOOL ? "1" : "0"}
-            emitMetadata={GISCUS_EMIT_METADATA_BOOL ? "1" : "0"}
-            inputPosition={GISCUS_INPUT_POSITION}
-            theme={GISCUS_THEME}
-            lang={GISCUS_LANG}
-          />
-        </div>
-      </section>
-    ) : (
-      <section class="mt-12 text-center text-sm text-text-muted">
-        Comentários desativados. Para ativar, configure <strong>GISCUS_REPO</strong> no arquivo <em>.env</em> com o formato <code>owner/repo</code> e recompile o site.
-      </section>
-    )}
+    <Comments postId={typedPost.id} />
   </article>
 </BaseLayout>
