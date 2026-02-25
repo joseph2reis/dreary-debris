@@ -17,8 +17,11 @@ const { title, description, image, slug, date, className, labels } = Astro.props
 
 <a
   href={slug}
-  data-labels={labels ? labels.join(',') : ''}
-  class:list={["group flex flex-col bg-surface border border-border rounded-3xl overflow-hidden hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300", className]}
+  data-labels={labels ? labels.join(",") : ""}
+  class:list={[
+    "group flex flex-col bg-surface border border-border rounded-3xl overflow-hidden hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300",
+    className,
+  ]}
 >
   {image && (
     <div class="aspect-video overflow-hidden">
@@ -32,9 +35,11 @@ const { title, description, image, slug, date, className, labels } = Astro.props
   )}
 
   <div class="p-6 flex flex-col grow">
-    {date && <div class="flex items-center gap-2 text-xs text-text-muted font-bold uppercase tracking-wider mb-3">
-      <span>{date}</span>
-    </div>}
+    {date && (
+      <div class="flex items-center gap-2 text-xs text-text-muted font-bold uppercase tracking-wider mb-3">
+        <span>{date}</span>
+      </div>
+    )}
 
     <h2 class="text-xl font-bold text-text mb-3 group-hover:text-primary transition-colors line-clamp-2 leading-snug">
       {title}

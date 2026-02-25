@@ -3,7 +3,26 @@ import { ClientRouter } from "astro:transitions";
 import Header from "../components/layouts/Header.astro";
 import Footer from "../components/layouts/Footer.astro";
 import "../styles/global.css";
-const { title } = Astro.props;
+
+interface Props {
+  title: string;
+  description?: string;
+  image?: string;
+  canonical?: string;
+  noindex?: boolean;
+}
+
+const {
+  title,
+  description = "Caf\u00e9 Com F\u00e9: programacao, carreira e vida com Deus no mesmo caminho. Conteudo para quem codifica com proposito e vive pela fe.",
+  image = "/og-image.jpg",
+  canonical,
+  noindex = false,
+} = Astro.props;
+
+const canonicalUrl =
+  canonical ??
+  new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).toString();
 ---
 
 <!doctype html>
@@ -14,23 +33,28 @@ const { title } = Astro.props;
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
     <meta name="generator" content={Astro.generator} />
+
     <title>{title}</title>
-    <meta name="description" content="Explorando a interseção entre fé, tecnologia e o estilo de vida de uma nova geração. Aqui, o código e o propósito caminham juntos." />
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl} />
+
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+
     <meta property="og:title" content={title} />
-    <meta property="og:description" content="Explorando a interseção entre fé, tecnologia e o estilo de vida de uma nova geração. Aqui, o código e o propósito caminham juntos." />
-    <meta property="og:image" content="/og-image.jpg" />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={image} />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalUrl} />
+
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
-    <meta name="twitter:description" content="Explorando a interseção entre fé, tecnologia e o estilo de vida de uma nova geração. Aqui, o código e o propósito caminham juntos." />
-    <meta name="twitter:image" content="/og-image.jpg" />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={image} />
+
     <script is:inline>
       const applyTheme = () => {
         const theme = (() => {
-          if (
-            typeof localStorage !== "undefined" &&
-            localStorage.getItem("theme")
-          ) {
+          if (typeof localStorage !== "undefined" && localStorage.getItem("theme")) {
             return localStorage.getItem("theme");
           }
           if (window.matchMedia("(prefers-color-scheme: light)").matches) {
@@ -46,26 +70,17 @@ const { title } = Astro.props;
         }
       };
 
-      // Roda no carregamento inicial
       applyTheme();
-
-      // Roda toda vez que o Astro trocar de página via ClientRouter
       document.addEventListener("astro:after-swap", applyTheme);
     </script>
   </head>
 
   <body class="bg-bg">
-    <!-- liga o roteamento inteligente -->
     <ClientRouter />
-
-    <!-- componente global -->
     <Header transition:persist />
-
-    <!-- conteúdo que troca -->
     <main class="min-h-screen">
       <slot />
     </main>
-
     <Footer />
   </body>
 </html>

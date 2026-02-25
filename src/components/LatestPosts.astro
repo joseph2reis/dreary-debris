@@ -1,37 +1,45 @@
 ---
-// LatestPosts.astro
-import PostCard from "./PostCard.astro"; // Transforme o PostCard em .astro também!
+import PostCard from "./PostCard.astro";
+import type { Post } from "../lib/blogger";
 
 interface Props {
-  posts: any[]; // Ou use a interface que você já tem no Blogger
+  posts: Post[];
 }
 
 const { posts } = Astro.props;
-
-// Opcional: Limitar para os 3 ou 6 mais recentes na Home
 const displayPosts = posts.slice(0, 6);
 ---
 
 <section class="space-y-8" id="blog">
   <div class="flex items-center justify-between">
-    <h2 class="text-3xl font-bold tracking-tight text-text">
-      Últimos posts
-    </h2>
-    <a href="/blog" class="text-sm font-medium text-primary hover:underline flex items-center gap-1">
+    <h2 class="text-3xl font-bold tracking-tight text-text">Últimos posts</h2>
+    <a
+      href="/blog"
+      class="text-sm font-medium text-primary hover:underline flex items-center gap-1"
+    >
       Ver tudo <span aria-hidden="true">→</span>
     </a>
   </div>
 
-  <div class="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-    {displayPosts.map((post) => (
-      <PostCard
-        id={post.id}
-        title={post.title}
-        slug={`/blog/${post.slug}`}
-        description={post.description}
-        image={post.image}
-        date={post.date}
-      />
-    ))}
-  </div>
+  {
+    displayPosts.length > 0 ? (
+      <div class="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        {displayPosts.map((post) => (
+          <PostCard
+            id={post.id}
+            title={post.title}
+            slug={`/blog/${post.slug}`}
+            description={post.description}
+            image={post.image}
+            date={post.date}
+            labels={post.labels}
+          />
+        ))}
+      </div>
+    ) : (
+      <div class="rounded-2xl border border-border bg-surface p-8 text-center text-text-muted">
+        Ainda não há posts publicados.
+      </div>
+    )
+  }
 </section>

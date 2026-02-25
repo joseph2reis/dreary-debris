@@ -2,37 +2,37 @@
 import ThemeToggle from "../ThemeToggle";
 import SearchCompact from "../SearchCompact";
 import { getPosts } from "../../lib/blogger";
+import { Menu, X, Shield, Home, BookOpen, User, LogOut } from "lucide-astro";
 
 const posts = await getPosts();
 
 const menuItems = [
-  { label: "Início", href: "/" },
+  { label: "In\u00edcio", href: "/" },
   { label: "Blog", href: "/blog" },
   { label: "Sobre", href: "/sobre" },
-  { label: "Versículos", href: "/versiculos" },
+  { label: "Vers\u00edculos", href: "/versiculos" },
 ];
 
 const pathname = new URL(Astro.request.url).pathname;
+const isAdminRoute = pathname.startsWith("/admin");
 ---
 
 <header
   class="sticky top-0 z-50 border-b border-border bg-surface/80 backdrop-blur-md"
 >
-  <div class="mx-auto flex max-w-6xl items-center justify-between  p-4 px-6">
-    <!-- Botão Mobile -->
+  <div class="mx-auto flex max-w-6xl items-center justify-between p-4 px-6">
     <button
       id="menu-button"
       class="lg:hidden text-2xl flex items-center justify-center p-2 text-text left-6"
       aria-label="Abrir menu"
     >
-      ☰
+      <Menu size={22} />
     </button>
 
     <a href="/" class="text-xl font-bold text-text text-center">
-      Jovem <span class="text-primary">Cristão</span>
+      Caf&eacute; <span class="text-primary">Com F&eacute;</span>
     </a>
 
-    <!-- Menu Desktop -->
     <nav class="hidden lg:flex gap-8 text-sm font-medium items-center">
       {
         menuItems.map((item) => {
@@ -59,28 +59,75 @@ const pathname = new URL(Astro.request.url).pathname;
         })
       }
     </nav>
-    
-      <div class="w-1/3 hidden md:block">
-        <SearchCompact client:load posts={posts} />
+
+    <div class="w-1/3 hidden md:block">
+      <SearchCompact client:load posts={posts} />
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="hidden lg:block">
+        <a
+          id="desktop-admin-link"
+          href="/admin"
+          class:list={[
+            "hidden px-3 py-1.5 text-sm font-medium rounded-md border hover:bg-surface",
+            isAdminRoute
+              ? "border-primary text-primary bg-primary/10"
+              : "border-border text-text",
+          ]}
+        >
+          Admin
+        </a>
       </div>
-      <div>
-        <ThemeToggle client:load />
+      <div class="hidden lg:block">
+        <div id="admin-session-menu" class="relative group hidden">
+          <button
+            type="button"
+            class="px-3 py-1.5 text-sm font-medium rounded-md border border-green-500/30 text-green-600 bg-green-500/10"
+          >
+            Sessao ativa
+          </button>
+          <div
+            class="absolute right-0 top-full pt-2 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition pointer-events-none group-hover:pointer-events-auto"
+          >
+            <div
+              class="rounded-md border border-border bg-surface-solid shadow-lg"
+            >
+              <a
+                href="/admin"
+                class="block px-4 py-2 text-sm text-text hover:bg-surface"
+              >
+                Ir para administracao
+              </a>
+              <button
+                id="admin-logout"
+                type="button"
+                class="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-500/10"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-    
+      <ThemeToggle client:load />
+    </div>
   </div>
 </header>
 
-<!-- Overlay -->
 <div id="overlay" class="fixed inset-0 bg-black/50 hidden z-40"></div>
 
-<!-- Menu Mobile Lateral -->
 <aside
   id="mobile-menu"
-  class="fixed top-0 left-0 h-full w-64 bg-surface-solid border-r border-border transform -translate-x-full transition-transform duration-300 z-50 p-6"
+  class="fixed top-0 left-0 h-full w-64 bg-surface-solid border-r border-border transform -translate-x-full transition-transform duration-300 z-50 p-6 flex flex-col"
 >
   <div class="flex justify-between items-center mb-8">
     <h2 class="text-lg font-bold text-text">Menu</h2>
-    <button id="close-menu">✕</button>
+    <button
+      id="close-menu"
+      class="text-text hover:text-primary transition-colors"
+    >
+      <X size={20} />
+    </button>
   </div>
 
   <nav class="flex flex-col gap-6">
@@ -88,20 +135,106 @@ const pathname = new URL(Astro.request.url).pathname;
       <SearchCompact client:load posts={posts} />
     </div>
     {
-      menuItems.map((item) => (
+      menuItems.map((item, index) => (
         <a
           href={item.href}
-          class="text-text hover:text-primary transition-colors"
+          class:list={[
+            "flex items-center gap-2 px-2 py-1 rounded-md transition-colors",
+            item.href === "/"
+              ? pathname === "/"
+                ? "text-primary bg-primary/10 border-l-2 border-primary"
+                : "text-text hover:text-primary"
+              : pathname.startsWith(item.href)
+                ? "text-primary bg-primary/10 border-l-2 border-primary"
+                : "text-text hover:text-primary",
+          ]}
         >
+          {index === 0 && <Home size={16} />}
+          {index === 1 && <BookOpen size={16} />}
+          {index === 2 && <User size={16} />}
+          {index === 3 && <BookOpen size={16} />}
           {item.label}
         </a>
       ))
     }
-
+    <span
+      id="mobile-admin-session"
+      class="hidden text-sm font-medium rounded-md border border-green-500/30 text-green-600 bg-green-500/10 px-3 py-2"
+    >
+      Sessao ativa
+    </span>
+    <!-- <a
+      id="mobile-admin-link"
+      href="/admin"
+      class:list={[
+        "flex items-center gap-2 px-2 py-1 rounded-md transition-colors",
+        isAdminRoute
+          ? "text-primary bg-primary/10 border-l-2 border-primary"
+          : "text-text hover:text-primary",
+      ]}
+    >
+      <Shield size={16} />
+      Administração
+    </a> -->
   </nav>
+  <button
+    id="mobile-admin-logout"
+    type="button"
+    class="flex mt-auto items-center gap-2 text-left text-red-500 hover:text-red-400 transition-colors"
+  >
+    <LogOut size={16} />
+    Logout
+  </button>
 </aside>
 
 <script>
+  const ADMIN_TOKEN_KEY = "comentario_admin_token";
+  const sessionWindow = window as Window & {
+    __adminSessionListenersBound?: boolean;
+  };
+
+  function syncAdminSession() {
+    
+    const adminSessionMenu = document.getElementById("admin-session-menu");
+    const mobileAdminLogout = document.getElementById("mobile-admin-logout");
+    const mobileAdminSession = document.getElementById("mobile-admin-session");
+    if (
+      !adminSessionMenu ||
+      !mobileAdminLogout ||
+      !mobileAdminSession
+    )
+      return;
+
+    const hasSession = Boolean(localStorage.getItem(ADMIN_TOKEN_KEY));
+    adminSessionMenu.classList.toggle("hidden", !hasSession);
+    mobileAdminLogout.classList.toggle("hidden", !hasSession);
+    mobileAdminSession.classList.toggle("hidden", !hasSession);
+  }
+
+  function initAdminSessionMenu() {
+    const logoutButton = document.getElementById("admin-logout");
+    const mobileLogoutButton = document.getElementById("mobile-admin-logout");
+    if (!logoutButton || !mobileLogoutButton) return;
+
+    const runLogout = () => {
+      localStorage.removeItem(ADMIN_TOKEN_KEY);
+      syncAdminSession();
+      if (window.location.pathname.startsWith("/admin")) {
+        window.location.href = "/";
+      }
+    };
+
+    if (logoutButton.dataset.bound !== "true") {
+      logoutButton.addEventListener("click", runLogout);
+      logoutButton.dataset.bound = "true";
+    }
+
+    if (mobileLogoutButton.dataset.bound !== "true") {
+      mobileLogoutButton.addEventListener("click", runLogout);
+      mobileLogoutButton.dataset.bound = "true";
+    }
+  }
+
   function initMobileMenu() {
     const menuButton = document.getElementById("menu-button");
     const mobileMenu = document.getElementById("mobile-menu");
@@ -125,5 +258,19 @@ const pathname = new URL(Astro.request.url).pathname;
     overlay?.addEventListener("click", closeMenuFn);
   }
 
-  document.addEventListener("astro:page-load", initMobileMenu);
+  document.addEventListener("astro:page-load", () => {
+    initMobileMenu();
+    initAdminSessionMenu();
+    syncAdminSession();
+  });
+
+  if (!sessionWindow.__adminSessionListenersBound) {
+    window.addEventListener("storage", syncAdminSession);
+    window.addEventListener("admin-session-changed", syncAdminSession);
+    window.addEventListener("focus", syncAdminSession);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) syncAdminSession();
+    });
+    sessionWindow.__adminSessionListenersBound = true;
+  }
 </script>

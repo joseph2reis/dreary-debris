@@ -12,51 +12,59 @@ interface Props {
   postId: string;
 }
 
-const { postId } = Astro.props;
+const { postId } = Astro.props as Props;
+const API_BASE = "https://comentario-api.josenildo2reis.workers.dev";
 
-// Buscar comentários existentes no lado do servidor
 let comments: Comment[] = [];
 try {
   const response = await fetch(
-    `https://comentario-api.josenildo2reis.workers.dev/comments?post_id=${postId}`,
+    `${API_BASE}/comments?post_id=${encodeURIComponent(postId)}`,
+    {
+      headers: {
+        Accept: "application/json",
+      },
+    },
   );
+
   if (response.ok) {
     comments = await response.json();
   }
 } catch (error) {
-  console.error("Erro ao buscar comentários:", error);
+  console.error("Erro ao buscar comentarios:", error);
 }
 ---
 
 <section class="comments-section max-w-3xl mx-auto px-5 py-10">
-  <h2 class="text-2xl font-bold mb-6 text-text">Comentários</h2>
+  <h2 class="text-2xl font-bold mb-6 text-text">Comentarios</h2>
 
-  <!-- Lista de comentários -->
   <div id="comments-list" class="space-y-6 mb-8">
     {
-      comments.map((comment) => (
-        <div class="comment bg-surface p-4 rounded-lg border border-border">
-          <div class="flex items-center gap-3 mb-2">
-            <strong class="text-text">{comment.author}</strong>
-            <time class="text-sm text-text-muted">
-              {new Date(comment.created_at).toLocaleDateString("pt-BR")}
-            </time>
+      comments.length === 0 ? (
+        <p class="text-text-muted text-sm">Seja o primeiro a comentar.</p>
+      ) : (
+        comments.map((comment) => (
+          <div class="comment bg-surface p-4 rounded-lg border border-border">
+            <div class="flex items-center gap-3 mb-2">
+              <strong class="text-text">{comment.author}</strong>
+              <time class="text-sm text-text-muted">
+                {new Date(comment.created_at).toLocaleDateString("pt-BR")}
+              </time>
+            </div>
+            <p class="text-text">{comment.content}</p>
           </div>
-          <p class="text-text">{comment.content}</p>
-        </div>
-      ))
+        ))
+      )
     }
   </div>
 
   <div id="comment-message" class="hidden mb-4 p-3 rounded-md text-sm"></div>
 
-  <!-- Formulário para adicionar comentário -->
   <form
     id="comment-form"
     class="bg-surface p-6 rounded-lg border border-border"
     data-post-id={postId}
   >
-    <h3 class="text-lg font-semibold mb-4 text-text">Deixe seu comentário</h3>
+    <h3 class="text-lg font-semibold mb-4 text-text">Deixe seu comentario</h3>
     <div class="mb-4">
       <label for="author" class="block text-sm font-medium text-text mb-1"
         >Nome</label
@@ -71,7 +79,7 @@ try {
     </div>
     <div class="mb-4">
       <label for="content" class="block text-sm font-medium text-text mb-1"
-        >Comentário</label
+        >Comentario</label
       >
       <textarea
         id="content"
@@ -85,17 +93,16 @@ try {
       type="submit"
       class="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
     >
-      Enviar Comentário
+      Enviar comentario
     </button>
   </form>
 </section>
 
-<script>
+<script define:vars={{ postId, API_BASE }}>
   const form = document.getElementById(
     "comment-form",
   ) as HTMLFormElement | null;
   const messageBox = document.getElementById("comment-message");
-  const commentsList = document.getElementById("comments-list");
 
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -103,7 +110,6 @@ try {
     const formData = new FormData(form as HTMLFormElement);
     const author = formData.get("author")?.toString().trim();
     const content = formData.get("content")?.toString().trim();
-    const postId = form.dataset.postId;
 
     if (!author || !content) {
       showMessage("Preencha todos os campos.", "error");
@@ -111,52 +117,37 @@ try {
     }
 
     try {
-      console.log({ postId });
-      const response = await fetch(
-        `https://comentario-api.josenildo2reis.workers.dev/comments?post_id=${postId}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            post_id: postId,
-            author,
-            content,
-          }),
+      const response = await fetch(`${API_BASE}/comments`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({
+          post_id: postId,
+          author,
+          content,
+        }),
+      });
+
+      const payload = await response.json().catch(() => null);
 
       if (!response.ok) {
-        throw new Error("Erro ao enviar comentário");
+        const errorMessage = payload?.error || "Erro ao enviar comentario";
+        throw new Error(errorMessage);
       }
 
-      const newComment = await response.json();
-      console.log("NEW COMMENT:", newComment);
-
-      // 🔥 Inserir comentário no topo da lista
-      const commentHTML = `
-        <div class="comment bg-surface p-4 rounded-lg border border-border">
-          <div class="flex items-center gap-3 mb-2">
-            <strong class="text-text">${newComment.author}</strong>
-            <time class="text-sm text-text-muted">
-              ${new Date(newComment.created_at).toLocaleDateString("pt-BR")}
-            </time>
-          </div>
-          <p class="text-text">${newComment.content}</p>
-        </div>
-      `;
-
-      commentsList?.insertAdjacentHTML("afterbegin", commentHTML);
-
       form.reset();
-      showMessage("Comentário enviado com sucesso! 🎉", "success");
-    } catch (error) {
-      showMessage("Erro ao enviar comentário. Tente novamente.", "error");
+      if (payload?.status === "pending") {
+        showMessage("Comentario enviado e aguardando aprovacao.", "success");
+      } else {
+        showMessage("Comentario enviado com sucesso!", "success");
+      }
+    } catch {
+      showMessage("Erro ao enviar comentario. Tente novamente.", "error");
     }
   });
 
-  function showMessage(text: string | null, type: string) {
+  function showMessage(text: string, type: "success" | "error") {
     if (!messageBox) return;
 
     messageBox.textContent = text;
