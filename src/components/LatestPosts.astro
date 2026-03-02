@@ -10,14 +10,14 @@ const { posts } = Astro.props;
 const displayPosts = posts.slice(0, 6);
 ---
 
-<section class="space-y-8" id="blog">
+<section class={`space-y-8 ${displayPosts.length === 0 ? "hidden" : ""}`} id="blog">
   <div class="flex items-center justify-between">
     <h2 class="text-3xl font-bold tracking-tight text-text">Últimos posts</h2>
     <a
       href="/blog"
       class="text-sm font-medium text-primary hover:underline flex items-center gap-1"
     >
-      Ver tudo <span aria-hidden="true">→</span>
+      Ver tudo <span aria-hidden="true">&rarr;</span>
     </a>
   </div>
 

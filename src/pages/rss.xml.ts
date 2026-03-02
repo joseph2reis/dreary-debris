@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { getPosts } from "../lib/blogger";
 
-const siteUrl = process.env.SITE_URL || "https://example.com";
+const siteUrl = import.meta.env.SITE_URL || "https://example.com";
 
 export const GET: APIRoute = async () => {
   const posts = await getPosts();

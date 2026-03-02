@@ -14,8 +14,43 @@ export interface Post {
   };
 }
 
-function stripHtml(html: string) {
-  return html.replace(/<[^>]*>?/gm, "");
+function decodeHtmlEntities(text: string) {
+  return text
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&#(\d+);/g, (_, code) => {
+      const value = Number(code);
+      return Number.isFinite(value) ? String.fromCharCode(value) : "";
+    })
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => {
+      const value = Number.parseInt(hex, 16);
+      return Number.isFinite(value) ? String.fromCharCode(value) : "";
+    });
+}
+
+function htmlToPlainText(html: string) {
+  const withBreaks = html
+    .replace(/<\s*br[^>]*>/gi, " ")
+    .replace(/<\/(p|div|h1|h2|h3|h4|h5|h6|li|blockquote)>/gi, " ");
+
+  const withoutTags = withBreaks.replace(/<\/?[^>]+(>|$)/g, " ");
+
+  return decodeHtmlEntities(withoutTags)
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function buildExcerpt(html: string, maxLength = 160) {
+  const text = htmlToPlainText(html);
+  if (text.length <= maxLength) return text;
+  const sliced = text.slice(0, maxLength);
+  const lastSpace = sliced.lastIndexOf(" ");
+  const base = lastSpace > 120 ? sliced.slice(0, lastSpace) : sliced;
+  return `${base}...`;
 }
 
 function extractImage(content: string): string | undefined {
@@ -30,6 +65,36 @@ function extractSlug(url: string) {
 
 const BLOG_ID = import.meta.env.BLOG_ID;
 const API_KEY = import.meta.env.BLOGGER_KEY;
+
+function mapToPost(post: any): Post {
+  const publishedAt = post.published || post.updated || new Date().toISOString();
+  const parsed = new Date(publishedAt);
+  const date = isNaN(parsed.getTime())
+    ? ""
+    : parsed.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+
+  const rawContent = post.content || "";
+
+  return {
+    id: post.id,
+    slug: extractSlug(post.url) || post.id,
+    title: post.title,
+    description: buildExcerpt(rawContent, 170),
+    image: extractImage(rawContent),
+    date,
+    labels: post.labels || [],
+    publishedAt,
+    content: rawContent,
+    author: {
+      displayName: post.author?.displayName || "",
+      image: post.author?.image,
+    },
+  } as Post;
+}
 
 // Cache simples para posts (durante a execução do build)
 const postsCache = new Map<string, Post[]>();
@@ -79,32 +144,18 @@ export async function getPosts(): Promise<Post[]> {
     `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts?key=${API_KEY}`
   );
 
-  const data = await res.json();
+  if (!res.ok) return [];
+
+  let data: { items?: any[] };
+  try {
+    data = await res.json();
+  } catch {
+    return [];
+  }
+
   if (!data.items) return [];
 
-  const posts: Post[] = data.items.map((post: any) => {
-    const publishedAt = post.published || post.updated || new Date().toISOString();
-    const parsed = new Date(publishedAt);
-    const date = isNaN(parsed.getTime())
-      ? ""
-      : parsed.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
-
-    return {
-      id: post.id,
-      slug: extractSlug(post.url) || post.id,
-      title: post.title,
-      description: stripHtml(post.content).slice(0, 160) + "...",
-      image: extractImage(post.content),
-      date,
-      labels: post.labels || [],
-      publishedAt,
-      content: post.content,
-      author: {
-        displayName: post.author.displayName,
-        image: post.author.image,
-      },
-    } as Post;
-  });
+  const posts: Post[] = data.items.map((post: any) => mapToPost(post));
 
   postsCache.set(cacheKey, posts);
 
@@ -146,7 +197,31 @@ export async function getPost(id: string): Promise<Post | null> {
     }
   }
 
-  // 3) fallback para buscar todos e procurar
+  // 3) buscar post individual para garantir conteúdo completo
+  try {
+    const res = await fetch(
+      `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/${id}?key=${API_KEY}`
+    );
+    if (res.ok) {
+      const data = await res.json();
+      const mapped = mapToPost(data);
+      if (redisClient) {
+        try {
+          await redisClient.set(`post:${mapped.id}`, JSON.stringify(mapped), "EX", 3600);
+          if (mapped.slug) {
+            await redisClient.set(`post:slug:${mapped.slug}`, JSON.stringify(mapped), "EX", 3600);
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+      return mapped;
+    }
+  } catch (e) {
+    // ignore and fallback
+  }
+
+  // 4) fallback para buscar todos e procurar
   const posts = await getPosts();
   const found = posts.find((p) => p.id === id || p.slug === id);
   return found || null;

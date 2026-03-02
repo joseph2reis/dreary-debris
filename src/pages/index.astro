@@ -3,14 +3,25 @@ import Layout from "../layouts/Layout.astro";
 import Hero from "../components/Hero.astro";
 import FeaturedPost from "../components/FeaturedPost.astro";
 import LatestPosts from "../components/LatestPosts.astro";
+import NewsPosts from "../components/NewsPosts.astro";
 import { getPosts } from "../lib/blogger";
 import Categories from "../components/Categories.astro";
 import Newsletter from "../components/Newsletter.astro";
 import Missao from "../components/Missao.astro";
 
 const posts = await getPosts();
-const featuredPost = posts[0] ?? null;
-const latestPosts = featuredPost ? posts.slice(1) : posts;
+const FEATURED_TAG = "destaque";
+const featuredPost =
+  posts.find((post) =>
+    (post.labels ?? []).some(
+      (label) => label.trim().toLowerCase() === FEATURED_TAG
+    )
+  ) ??
+  posts[0] ??
+  null;
+const latestPosts = featuredPost
+  ? posts.filter((post) => post.id !== featuredPost.id)
+  : posts;
 
 const totalPosts = posts.length;
 const totalThemes = new Set(posts.flatMap((p) => p.labels ?? [])).size;
@@ -23,6 +34,7 @@ const totalThemes = new Set(posts.flatMap((p) => p.labels ?? [])).size;
   <main class="mx-auto max-w-6xl p-6 space-y-16">
     <Hero totalPosts={totalPosts} totalThemes={totalThemes} />
     <FeaturedPost post={featuredPost} />
+    <NewsPosts posts={posts} />
     <LatestPosts posts={latestPosts} />
     <Missao />
     <Categories posts={posts} />

@@ -1,46 +1,87 @@
-# Astro Starter Kit: Basics
+# Cafe Com Fe
 
-```sh
-npm create astro@latest -- --template basics
-```
+Frontend do projeto **Cafe Com Fe**, um blog em Astro com foco em programacao, fe e proposito.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+O site consome posts do Blogger, possui busca local, pagina de contato, area administrativa para moderacao de comentarios e paginas institucionais como termos de uso e politica de privacidade.
 
-## 🚀 Project Structure
+## Stack
 
-Inside of your Astro project, you'll see the following folders and files:
+- Astro 5
+- Tailwind CSS 4
+- React 19 (componentes pontuais no cliente)
+- Fuse.js (busca)
+- ioredis (cache opcional)
+
+## Principais Recursos
+
+- Home com destaque, ultimos posts, noticias e categorias
+- Listagem de posts e pagina individual de artigo
+- Paginas por tag
+- Busca de posts no header e na pagina do blog
+- Comentarios com moderacao
+- Painel `/admin` para aprovar ou rejeitar comentarios
+- Paginas `/sobre`, `/contato`, `/termos` e `/privacidade`
+- RSS e sitemap
+- Tema claro/escuro
+
+## Estrutura
 
 ```text
 /
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
+|-- public/
+|-- src/
+|   |-- components/
+|   |-- layouts/
+|   |-- lib/
+|   |-- pages/
+|   `-- styles/
+|-- astro.config.mjs
+|-- package.json
+`-- tailwind.config.ts
 ```
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+## Variaveis de Ambiente
 
-## 🧞 Commands
+Crie um arquivo `.env` na raiz do frontend com as variaveis abaixo:
 
-All commands are run from the root of the project, from a terminal:
+```env
+BLOG_ID=seu_blog_id
+BLOGGER_KEY=sua_chave_do_blogger
+REDIS_URL=
+SITE_URL=https://seu-dominio.com
+```
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+### Uso das variaveis
 
-## 👀 Want to learn more?
+- `BLOG_ID`: ID do blog no Blogger
+- `BLOGGER_KEY`: chave da API do Blogger
+- `REDIS_URL`: cache opcional para posts
+- `SITE_URL`: URL publica usada em canonical, RSS e sitemap
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+## Comandos
+
+```bash
+npm install
+npm run dev
+npm run build
+npm run preview
+```
+
+## Rotas Principais
+
+- `/`
+- `/blog`
+- `/blog/[slug]`
+- `/blog/tag/[tag]`
+- `/sobre`
+- `/contato`
+- `/termos`
+- `/privacidade`
+- `/admin`
+- `/rss.xml`
+
+## Observacoes
+
+- O formulario de contato atual abre o cliente de e-mail do usuario via `mailto`.
+- O botao de tema usa `localStorage` para persistir a preferencia.
+- O painel admin depende da API de comentarios configurada no frontend.

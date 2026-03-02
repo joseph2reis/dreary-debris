@@ -1,8 +1,9 @@
----
+﻿---
 import ThemeToggle from "../ThemeToggle";
 import SearchCompact from "../SearchCompact";
 import { getPosts } from "../../lib/blogger";
-import { Menu, X, Shield, Home, BookOpen, User, LogOut } from "lucide-astro";
+import { Menu, X, Home, BookOpen, User, LogOut } from "lucide-astro";
+import { Image } from "astro:assets";
 
 const posts = await getPosts();
 
@@ -10,7 +11,7 @@ const menuItems = [
   { label: "In\u00edcio", href: "/" },
   { label: "Blog", href: "/blog" },
   { label: "Sobre", href: "/sobre" },
-  { label: "Vers\u00edculos", href: "/versiculos" },
+  { label: "Contato", href: "/contato" },
 ];
 
 const pathname = new URL(Astro.request.url).pathname;
@@ -20,7 +21,7 @@ const isAdminRoute = pathname.startsWith("/admin");
 <header
   class="sticky top-0 z-50 border-b border-border bg-surface/80 backdrop-blur-md"
 >
-  <div class="mx-auto flex max-w-6xl items-center justify-between p-4 px-6">
+  <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 p-4 px-6">
     <button
       id="menu-button"
       class="lg:hidden text-2xl flex items-center justify-center p-2 text-text left-6"
@@ -29,8 +30,22 @@ const isAdminRoute = pathname.startsWith("/admin");
       <Menu size={22} />
     </button>
 
-    <a href="/" class="text-xl font-bold text-text text-center">
-      Caf&eacute; <span class="text-primary">Com F&eacute;</span>
+    <a
+      href="/"
+      class="inline-flex min-w-0 items-center gap-3 text-text leading-none"
+      style="font-family: 'Pacifico', cursive;"
+      aria-label="Café Com Fé"
+    >
+      <Image
+        src="/logo.webp"
+        alt="Logo Café Com Fé"
+        loading="eager"
+        width={50}
+        height={50}
+      />
+      <span class="text-2xl sm:text-3xl">
+        Café <span class="text-primary">com Fé</span>
+      </span>
     </a>
 
     <nav class="hidden lg:flex gap-8 text-sm font-medium items-center">
@@ -63,7 +78,7 @@ const isAdminRoute = pathname.startsWith("/admin");
     <div class="w-1/3 hidden md:block">
       <SearchCompact client:load posts={posts} />
     </div>
-    <div class="flex items-center gap-3">
+    <div class="shrink-0 flex items-center gap-3">
       <div class="hidden lg:block">
         <a
           id="desktop-admin-link"
@@ -84,7 +99,7 @@ const isAdminRoute = pathname.startsWith("/admin");
             type="button"
             class="px-3 py-1.5 text-sm font-medium rounded-md border border-green-500/30 text-green-600 bg-green-500/10"
           >
-            Sessao ativa
+            Sessão ativa
           </button>
           <div
             class="absolute right-0 top-full pt-2 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition pointer-events-none group-hover:pointer-events-auto"
@@ -96,7 +111,7 @@ const isAdminRoute = pathname.startsWith("/admin");
                 href="/admin"
                 class="block px-4 py-2 text-sm text-text hover:bg-surface"
               >
-                Ir para administracao
+                Ir para administração
               </a>
               <button
                 id="admin-logout"
@@ -161,7 +176,7 @@ const isAdminRoute = pathname.startsWith("/admin");
       id="mobile-admin-session"
       class="hidden text-sm font-medium rounded-md border border-green-500/30 text-green-600 bg-green-500/10 px-3 py-2"
     >
-      Sessao ativa
+      Sessão ativa
     </span>
     <!-- <a
       id="mobile-admin-link"
@@ -174,7 +189,7 @@ const isAdminRoute = pathname.startsWith("/admin");
       ]}
     >
       <Shield size={16} />
-      Administração
+      AdministraÃ§Ã£o
     </a> -->
   </nav>
   <button
@@ -194,16 +209,10 @@ const isAdminRoute = pathname.startsWith("/admin");
   };
 
   function syncAdminSession() {
-    
     const adminSessionMenu = document.getElementById("admin-session-menu");
     const mobileAdminLogout = document.getElementById("mobile-admin-logout");
     const mobileAdminSession = document.getElementById("mobile-admin-session");
-    if (
-      !adminSessionMenu ||
-      !mobileAdminLogout ||
-      !mobileAdminSession
-    )
-      return;
+    if (!adminSessionMenu || !mobileAdminLogout || !mobileAdminSession) return;
 
     const hasSession = Boolean(localStorage.getItem(ADMIN_TOKEN_KEY));
     adminSessionMenu.classList.toggle("hidden", !hasSession);
@@ -240,6 +249,7 @@ const isAdminRoute = pathname.startsWith("/admin");
     const mobileMenu = document.getElementById("mobile-menu");
     const overlay = document.getElementById("overlay");
     const closeMenu = document.getElementById("close-menu");
+    const mobileLinks = mobileMenu?.querySelectorAll("a") ?? [];
 
     function openMenu() {
       mobileMenu?.classList.remove("-translate-x-full");
@@ -253,9 +263,29 @@ const isAdminRoute = pathname.startsWith("/admin");
       document.body.classList.remove("overflow-hidden");
     }
 
-    menuButton?.addEventListener("click", openMenu);
-    closeMenu?.addEventListener("click", closeMenuFn);
-    overlay?.addEventListener("click", closeMenuFn);
+    closeMenuFn();
+
+    if (menuButton && menuButton.dataset.bound !== "true") {
+      menuButton.addEventListener("click", openMenu);
+      menuButton.dataset.bound = "true";
+    }
+
+    if (closeMenu && closeMenu.dataset.bound !== "true") {
+      closeMenu.addEventListener("click", closeMenuFn);
+      closeMenu.dataset.bound = "true";
+    }
+
+    if (overlay && overlay.dataset.bound !== "true") {
+      overlay.addEventListener("click", closeMenuFn);
+      overlay.dataset.bound = "true";
+    }
+
+    mobileLinks.forEach((link) => {
+      if (link.dataset.bound !== "true") {
+        link.addEventListener("click", closeMenuFn);
+        link.dataset.bound = "true";
+      }
+    });
   }
 
   document.addEventListener("astro:page-load", () => {

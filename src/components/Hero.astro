@@ -1,4 +1,5 @@
 ---
+import { Image } from "astro:assets";
 import verses from "../data/verses.json";
 
 interface Props {
@@ -31,13 +32,25 @@ const verse = verses[verseIndex];
   </div>
 
   <div class="mx-auto max-w-4xl px-6 space-y-8">
-    <h1 class="text-5xl font-extrabold tracking-tight text-text sm:text-7xl">
-      Caf&eacute; <span class="text-primary">Com F&eacute;</span>
-    </h1>
+    <div class="flex flex-col items-center justify-center gap-y-5">
+      <Image
+        src="/logo.webp"
+        alt="Logo Café Com Fé"
+        loading="eager"
+        width={150}
+        height={150}
+      />
+      <h1
+        class="text-5xl tracking-wider font-extrabold text-text sm:text-7xl"
+        style="font-family: 'Pacifico', cursive;"
+      >
+        Café <span class="text-primary">com Fé</span>
+      </h1>
+    </div>
 
     <p class="mx-auto max-w-2xl text-lg leading-8 text-text-muted sm:text-xl">
       Um espaco para unir programação e fé. Aqui, o café alimenta o código e a
-      fe sustenta o proposito.
+      fé sustenta o proposito.
     </p>
 
     <div

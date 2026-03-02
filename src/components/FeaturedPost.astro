@@ -26,33 +26,35 @@ const { post } = Astro.props;
 
       <a
         href={`/blog/${post.slug}`}
-        class="group grid gap-0 overflow-hidden rounded-3xl border border-border bg-surface md:grid-cols-2"
+        class="group grid overflow-hidden rounded-3xl border border-border bg-surface md:grid-cols-[40%_60%]"
       >
         {post.image && (
-          <div class="aspect-video md:aspect-auto">
+          <div class="h-64 md:h-full">
             <Image
               src={post.image}
               alt={post.title}
-              width={1000}
+              width={800}
               height={600}
-              loading="eager"
+              loading="lazy"
               class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
             />
           </div>
         )}
 
-        <div class="flex flex-col p-8">
+        <div class="flex flex-col justify-center p-8">
           <span class="text-xs font-bold uppercase tracking-wider text-text-muted">
             {post.date}
           </span>
+
           <h3 class="mt-3 text-2xl font-extrabold text-text group-hover:text-primary transition-colors">
             {post.title}
           </h3>
+
           <p class="mt-4 text-text-muted leading-relaxed">{post.description}</p>
 
           <div class="mt-8 inline-flex items-center gap-2 text-sm font-bold text-primary">
             Ler agora
-            <span aria-hidden="true">→</span>
+            <span aria-hidden="true">&rarr;</span>
           </div>
         </div>
       </a>

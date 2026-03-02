@@ -1,0 +1,59 @@
+---
+import PostCard from "./PostCard.astro";
+import type { Post } from "../lib/blogger";
+
+interface Props {
+  posts: Post[];
+}
+
+const { posts } = Astro.props as Props;
+
+function normalizeLabel(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+const newsTag =
+  posts
+    .flatMap((post) => post.labels ?? [])
+    .find((label) => normalizeLabel(label) === "noticia") ?? "noticia";
+
+const newsPosts = posts
+  .filter((post) =>
+    (post.labels ?? []).some((label) => normalizeLabel(label) === "noticia")
+  )
+  .slice(0, 6);
+---
+
+<section class={`space-y-8 ${newsPosts.length === 0 ? "hidden" : ""}`} id="noticias">
+  <div class="flex items-center justify-between">
+    <h2 class="text-3xl font-bold tracking-tight text-text">Noticias</h2>
+    <a
+      href={`/blog/tag/${encodeURIComponent(newsTag)}`}
+      class="text-sm font-medium text-primary hover:underline flex items-center gap-1"
+    >
+      Ver noticias <span aria-hidden="true">&rarr;</span>
+    </a>
+  </div>
+
+  {
+    newsPosts.length > 0 ? (
+      <div class="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        {newsPosts.map((post) => (
+          <PostCard
+            id={post.id}
+            title={post.title}
+            slug={`/blog/${post.slug}`}
+            description={post.description}
+            image={post.image}
+            date={post.date}
+            labels={post.labels}
+          />
+        ))}
+      </div>
+    ) : null
+  }
+</section>

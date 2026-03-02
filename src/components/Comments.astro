@@ -30,12 +30,12 @@ try {
     comments = await response.json();
   }
 } catch (error) {
-  console.error("Erro ao buscar comentarios:", error);
+  console.error("Erro ao buscar comentários:", error);
 }
 ---
 
-<section class="comments-section max-w-3xl mx-auto px-5 py-10">
-  <h2 class="text-2xl font-bold mb-6 text-text">Comentarios</h2>
+<section class="comments-section max-w-3xl mx-auto py-10">
+  <h2 class="text-2xl font-bold mb-6 text-text">Comentários</h2>
 
   <div id="comments-list" class="space-y-6 mb-8">
     {
@@ -64,7 +64,7 @@ try {
     class="bg-surface p-6 rounded-lg border border-border"
     data-post-id={postId}
   >
-    <h3 class="text-lg font-semibold mb-4 text-text">Deixe seu comentario</h3>
+    <h3 class="text-lg font-semibold mb-4 text-text">Deixe seu comentário</h3>
     <div class="mb-4">
       <label for="author" class="block text-sm font-medium text-text mb-1"
         >Nome</label
@@ -79,7 +79,7 @@ try {
     </div>
     <div class="mb-4">
       <label for="content" class="block text-sm font-medium text-text mb-1"
-        >Comentario</label
+        >Comentário</label
       >
       <textarea
         id="content"
@@ -93,21 +93,19 @@ try {
       type="submit"
       class="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
     >
-      Enviar comentario
+      Enviar comentário
     </button>
   </form>
 </section>
 
 <script define:vars={{ postId, API_BASE }}>
-  const form = document.getElementById(
-    "comment-form",
-  ) as HTMLFormElement | null;
+  const form = document.getElementById("comment-form");
   const messageBox = document.getElementById("comment-message");
 
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const formData = new FormData(form as HTMLFormElement);
+    const formData = new FormData(form);
     const author = formData.get("author")?.toString().trim();
     const content = formData.get("content")?.toString().trim();
 
@@ -132,22 +130,22 @@ try {
       const payload = await response.json().catch(() => null);
 
       if (!response.ok) {
-        const errorMessage = payload?.error || "Erro ao enviar comentario";
+        const errorMessage = payload?.error || "Erro ao enviar comentário";
         throw new Error(errorMessage);
       }
 
       form.reset();
       if (payload?.status === "pending") {
-        showMessage("Comentario enviado e aguardando aprovacao.", "success");
+        showMessage("Comentário enviado e aguardando aprovação.", "success");
       } else {
-        showMessage("Comentario enviado com sucesso!", "success");
+        showMessage("Comentário enviado com sucesso!", "success");
       }
     } catch {
-      showMessage("Erro ao enviar comentario. Tente novamente.", "error");
+      showMessage("Erro ao enviar comentário. Tente novamente.", "error");
     }
   });
 
-  function showMessage(text: string, type: "success" | "error") {
+  function showMessage(text, type) {
     if (!messageBox) return;
 
     messageBox.textContent = text;
