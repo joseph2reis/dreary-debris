@@ -8,11 +8,12 @@ interface Props {
   description: string;
   image?: string;
   date?: string;
+  readingTime?: string;
   className?: string;
   labels?: string[];
 }
 
-const { title, description, image, slug, date, className, labels } =
+const { title, description, image, slug, date, readingTime, className, labels } =
   Astro.props;
 ---
 
@@ -40,13 +41,13 @@ const { title, description, image, slug, date, className, labels } =
   }
 
   <div class="p-6 flex flex-col grow">
-    {
-      date && (
-        <div class="flex items-center gap-2 text-xs text-text-muted font-bold uppercase tracking-wider mb-3">
-          <span>{date}</span>
-        </div>
-      )
-    }
+    {(date || readingTime) && (
+      <div class="flex flex-wrap items-center gap-2 text-xs text-text-muted font-bold uppercase tracking-wider mb-3">
+        {date && <span>{date}</span>}
+        {date && readingTime && <span>&bull;</span>}
+        {readingTime && <span>{readingTime}</span>}
+      </div>
+    )}
 
     <h2
       class="text-xl font-bold text-text mb-3 group-hover:text-primary transition-colors line-clamp-2 leading-snug"

@@ -32,6 +32,7 @@ const posts = (await getPosts()).filter((p) => (p as any).labels?.includes(tag))
           description={post.description}
           image={post.image}
           date={post.date}
+          readingTime={post.readingTime}
           labels={(post as any).labels || []}
         />
       ))}

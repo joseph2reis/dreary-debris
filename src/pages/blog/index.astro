@@ -26,11 +26,12 @@ const posts = await getPosts();
           <PostCard
             slug={`/blog/${post.slug}`}
             title={post.title}
-            description={post.description}
-            image={post.image}
-            date={post.date}
-            labels={(post as any).labels || []}
-          />
+          description={post.description}
+          image={post.image}
+          date={post.date}
+          readingTime={post.readingTime}
+          labels={(post as any).labels || []}
+        />
         ))
       }
     </div>

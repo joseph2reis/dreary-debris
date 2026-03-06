@@ -6,6 +6,7 @@ export interface Post {
   image?: string;
   date: string; // already formatted pt-BR
   publishedAt: string; // ISO date
+  readingTime: string;
   labels?: string[];
   content: string;
   author: {
@@ -53,6 +54,13 @@ function buildExcerpt(html: string, maxLength = 160) {
   return `${base}...`;
 }
 
+function estimateReadingTime(html: string) {
+  const text = htmlToPlainText(html);
+  const wordCount = text ? text.split(/\s+/).filter(Boolean).length : 0;
+  const minutes = Math.max(1, Math.ceil(wordCount / 200));
+  return `${minutes} min de leitura`;
+}
+
 function extractImage(content: string): string | undefined {
   const match = content.match(/<img[^>]+src="([^">]+)"/);
   return match ? match[1] : undefined;
@@ -86,6 +94,7 @@ function mapToPost(post: any): Post {
     description: buildExcerpt(rawContent, 170),
     image: extractImage(rawContent),
     date,
+    readingTime: estimateReadingTime(rawContent),
     labels: post.labels || [],
     publishedAt,
     content: rawContent,
