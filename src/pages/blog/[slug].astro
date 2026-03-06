@@ -8,16 +8,10 @@ import RelatedPosts from "../../components/RelatedPosts.astro";
 import Comments from "../../components/Comments.astro";
 import { Image } from "astro:assets";
 
-export async function getStaticPaths() {
-  const posts = await getPosts();
-  return posts.map((post) => ({
-    params: { slug: post.slug },
-    props: { postId: post.id },
-  }));
-}
+export const prerender = false;
 
-const { postId } = Astro.props;
-const post = await getPost(postId);
+const { slug } = Astro.params;
+const post = slug ? await getPost(slug) : null;
 
 if (!post) return Astro.redirect("/404");
 

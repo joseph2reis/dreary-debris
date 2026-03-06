@@ -3,25 +3,20 @@ import Layout from "../../../layouts/Layout.astro";
 import PostCard from "../../../components/PostCard.astro";
 import { getPosts } from "../../../lib/blogger";
 
-export async function getStaticPaths() {
-  const posts = await getPosts();
-  const labels = new Set<string>();
-  for (const p of posts) {
-    ((p as any).labels || []).forEach((l: string) => labels.add(l));
-  }
-
-  return Array.from(labels).map((label) => ({ params: { tag: label } }));
-}
+export const prerender = false;
 
 const { tag } = Astro.params;
-const posts = (await getPosts()).filter((p) => (p as any).labels?.includes(tag));
+const decodedTag = tag ? decodeURIComponent(tag) : "";
+const posts = (await getPosts()).filter((p) =>
+  (p as any).labels?.includes(decodedTag)
+);
 ---
 
-<Layout title={`Posts sobre ${tag}`}>
+<Layout title={`Posts sobre ${decodedTag}`}>
   <main class="max-w-6xl mx-auto px-6 pt-32 pb-20">
     <header class="mb-16 text-center">
-      <h1 class="text-4xl sm:text-6xl font-black text-text mb-4">{`Posts sobre ${tag}`}</h1>
-      <p class="text-text-muted text-lg max-w-2xl mx-auto">Posts marcados com "{tag}".</p>
+      <h1 class="text-4xl sm:text-6xl font-black text-text mb-4">{`Posts sobre ${decodedTag}`}</h1>
+      <p class="text-text-muted text-lg max-w-2xl mx-auto">Posts marcados com "{decodedTag}".</p>
     </header>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

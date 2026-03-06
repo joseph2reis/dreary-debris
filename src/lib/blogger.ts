@@ -70,7 +70,6 @@ function extractSlug(url: string) {
   return url.split("/").pop()?.replace(".html", "");
 }
 
-
 const BLOG_ID = import.meta.env.BLOG_ID;
 const API_KEY = import.meta.env.BLOGGER_KEY;
 
@@ -80,10 +79,10 @@ function mapToPost(post: any): Post {
   const date = isNaN(parsed.getTime())
     ? ""
     : parsed.toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    });
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      });
 
   const rawContent = post.content || "";
 
@@ -105,48 +104,15 @@ function mapToPost(post: any): Post {
   } as Post;
 }
 
-// Cache simples para posts (durante a execução do build)
-const postsCache = new Map<string, Post[]>();
-
-// Redis support (optional). Se `REDIS_URL` estiver configurada, usaremos Redis
-// para cache persistente. Caso contrário, usamos o cache em memória acima.
-let redisClient: any = null;
-try {
-  const REDIS_URL = process.env.REDIS_URL;
-  if (REDIS_URL) {
-    // Import dinamicamente para não quebrar ambiente sem dependência
-    // (ioredis foi instalado como dependência do projeto)
-    // @ts-ignore
-    const Redis = await import('ioredis');
-    // ioredis default export é a classe
-    // @ts-ignore
-    redisClient = new Redis.default ? new Redis.default(REDIS_URL) : new Redis(REDIS_URL);
-  }
-} catch (err) {
-  // Falha ao conectar ao Redis — continuar sem Redis
-  redisClient = null;
-}
+// Cache simples em memória por instância do worker
+const POSTS_CACHE_TTL_MS = 60 * 1000;
+const postsCache = new Map<string, { value: Post[]; expiresAt: number }>();
 
 export async function getPosts(): Promise<Post[]> {
-  const cacheKey = 'posts';
-  // 1) tentar cache em memória
-  if (postsCache.has(cacheKey)) {
-    return postsCache.get(cacheKey)!;
-  }
-
-  // 2) tentar cache em Redis se disponível
-  if (redisClient) {
-    try {
-      const raw = await redisClient.get(cacheKey);
-      if (raw) {
-        const parsed = JSON.parse(raw) as Post[];
-        // popular cache em memória também
-        postsCache.set(cacheKey, parsed);
-        return parsed;
-      }
-    } catch (e) {
-      // ignore redis errors and fallback
-    }
+  const cacheKey = "posts";
+  const cached = postsCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.value;
   }
 
   const res = await fetch(
@@ -165,76 +131,33 @@ export async function getPosts(): Promise<Post[]> {
   if (!data.items) return [];
 
   const posts: Post[] = data.items.map((post: any) => mapToPost(post));
-
-  postsCache.set(cacheKey, posts);
-
-  // também salva no Redis com TTL (ex: 3600s = 1h)
-  if (redisClient) {
-    try {
-      await redisClient.set(cacheKey, JSON.stringify(posts), 'EX', 3600);
-      // opcional: salvar posts individuais
-      for (const p of posts) {
-        await redisClient.set(`post:${p.id}`, JSON.stringify(p), 'EX', 3600);
-        if (p.slug) {
-          await redisClient.set(`post:slug:${p.slug}`, JSON.stringify(p), 'EX', 3600);
-        }
-      }
-    } catch (e) {
-      // ignore
-    }
-  }
+  postsCache.set(cacheKey, {
+    value: posts,
+    expiresAt: Date.now() + POSTS_CACHE_TTL_MS,
+  });
   return posts;
 }
 
-export async function getPost(id: string): Promise<Post | null> {
-  // tenta achar no cache
-  // 1) checar cache em memória primeiro
-  for (const val of postsCache.values()) {
-    const found = val.find((p) => p.id === id || p.slug === id);
+export async function getPost(idOrSlug: string): Promise<Post | null> {
+  for (const entry of postsCache.values()) {
+    if (entry.expiresAt <= Date.now()) continue;
+    const found = entry.value.find((p) => p.id === idOrSlug || p.slug === idOrSlug);
     if (found) return found;
   }
 
-  // 2) checar Redis
-  if (redisClient) {
-    try {
-      const byId = await redisClient.get(`post:${id}`);
-      if (byId) return JSON.parse(byId) as Post;
-      const bySlug = await redisClient.get(`post:slug:${id}`);
-      if (bySlug) return JSON.parse(bySlug) as Post;
-    } catch (e) {
-      // ignore
-    }
-  }
+  const posts = await getPosts();
+  const found = posts.find((p) => p.id === idOrSlug || p.slug === idOrSlug);
+  if (found) return found;
 
-  // 3) buscar post individual para garantir conteúdo completo
+  // fallback: tenta buscar como ID direto no Blogger
   try {
     const res = await fetch(
-      `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/${id}?key=${API_KEY}`
+      `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/${idOrSlug}?key=${API_KEY}`
     );
-    if (res.ok) {
-      const data = await res.json();
-      const mapped = mapToPost(data);
-      if (redisClient) {
-        try {
-          await redisClient.set(`post:${mapped.id}`, JSON.stringify(mapped), "EX", 3600);
-          if (mapped.slug) {
-            await redisClient.set(`post:slug:${mapped.slug}`, JSON.stringify(mapped), "EX", 3600);
-          }
-        } catch (e) {
-          // ignore
-        }
-      }
-      return mapped;
-    }
-  } catch (e) {
-    // ignore and fallback
+    if (!res.ok) return null;
+    const data = await res.json();
+    return mapToPost(data);
+  } catch {
+    return null;
   }
-
-  // 4) fallback para buscar todos e procurar
-  const posts = await getPosts();
-  const found = posts.find((p) => p.id === id || p.slug === id);
-  return found || null;
 }
-
-
-
