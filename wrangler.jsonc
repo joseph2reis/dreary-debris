@@ -1,14 +1,16 @@
 {
   "name": "cafecomfe",
-  "main": "@astrojs/cloudflare/entrypoints/server",
+  "main": "dist/_worker.js/index.js",
   "compatibility_date": "2026-03-06",
-
   "compatibility_flags": [
-    "nodejs_compat"
+    "nodejs_compat",
+    "global_fetch_strictly_public"
   ],
-
   "assets": {
     "binding": "ASSETS",
     "directory": "./dist"
+  },
+  "observability": {
+    "enabled": true
   }
 }
