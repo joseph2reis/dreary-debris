@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+ html {
+    scroll-behavior: auto;
+  }
+
 @theme {
   --font-sans: "Inter", stroke-sans, system-ui, -apple-system, sans-serif;
   --color-bg: #0e0d0c;
@@ -28,9 +32,6 @@
 }
 
 @layer base {
-  html {
-    scroll-behavior: auto;
-  }
 
   *,
   ::after,
