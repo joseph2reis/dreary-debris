@@ -3,16 +3,6 @@ import Layout from "../../../layouts/Layout.astro";
 import PostCard from "../../../components/PostCard.astro";
 import { getPosts } from "../../../lib/blogger";
 
-export async function getStaticPaths() {
-  const posts = await getPosts();
-  const labels = new Set<string>();
-  for (const p of posts) {
-    ((p as any).labels || []).forEach((l: string) => labels.add(l));
-  }
-
-  return Array.from(labels).map((label) => ({ params: { tag: label } }));
-}
-
 const { tag } = Astro.params;
 const posts = (await getPosts()).filter((p) => (p as any).labels?.includes(tag));
 ---

@@ -49,6 +49,7 @@ BLOG_ID=seu_blog_id
 BLOGGER_KEY=sua_chave_do_blogger
 REDIS_URL=
 SITE_URL=https://seu-dominio.com
+POSTS_CACHE_TTL_SECONDS=120
 ```
 
 ### Uso das variaveis
@@ -57,6 +58,7 @@ SITE_URL=https://seu-dominio.com
 - `BLOGGER_KEY`: chave da API do Blogger
 - `REDIS_URL`: cache opcional para posts
 - `SITE_URL`: URL publica usada em canonical, RSS e sitemap
+- `POSTS_CACHE_TTL_SECONDS`: tempo de cache em segundos para posts no SSR (padrao: 120)
 
 ## Comandos
 
@@ -85,3 +87,4 @@ npm run preview
 - O formulario de contato atual abre o cliente de e-mail do usuario via `mailto`.
 - O botao de tema usa `localStorage` para persistir a preferencia.
 - O painel admin depende da API de comentarios configurada no frontend.
+- Em `output: "server"` (Cloudflare Pages SSR), posts do Blogger atualizam automaticamente sem build hook.

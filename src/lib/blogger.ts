@@ -70,9 +70,10 @@ function extractSlug(url: string) {
   return url.split("/").pop()?.replace(".html", "");
 }
 
-
 const BLOG_ID = import.meta.env.BLOG_ID;
 const API_KEY = import.meta.env.BLOGGER_KEY;
+const CACHE_TTL_SECONDS = Number(import.meta.env.POSTS_CACHE_TTL_SECONDS ?? "120");
+const CACHE_TTL_MS = Math.max(15, CACHE_TTL_SECONDS) * 1000;
 
 function mapToPost(post: any): Post {
   const publishedAt = post.published || post.updated || new Date().toISOString();
@@ -80,10 +81,10 @@ function mapToPost(post: any): Post {
   const date = isNaN(parsed.getTime())
     ? ""
     : parsed.toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    });
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      });
 
   const rawContent = post.content || "";
 
@@ -105,46 +106,48 @@ function mapToPost(post: any): Post {
   } as Post;
 }
 
-// Cache simples para posts (durante a execução do build)
-const postsCache = new Map<string, Post[]>();
+// Cache em memoria com TTL para evitar conteudo desatualizado em SSR.
+let postsCache: Post[] | null = null;
+let postsCacheExpiresAt = 0;
 
-// Redis support (optional). Se `REDIS_URL` estiver configurada, usaremos Redis
-// para cache persistente. Caso contrário, usamos o cache em memória acima.
+// Redis support (optional). Se REDIS_URL estiver configurada, usaremos Redis
+// para cache persistente. Em Cloudflare runtime, ioredis nao e suportado.
 let redisClient: any = null;
 try {
-  const REDIS_URL = process.env.REDIS_URL;
-  if (REDIS_URL) {
-    // Import dinamicamente para não quebrar ambiente sem dependência
-    // (ioredis foi instalado como dependência do projeto)
+  const REDIS_URL =
+    import.meta.env.REDIS_URL ||
+    (typeof process !== "undefined" ? process.env?.REDIS_URL : undefined);
+  const isCloudflareRuntime = typeof WebSocketPair !== "undefined";
+
+  if (REDIS_URL && !isCloudflareRuntime) {
     // @ts-ignore
-    const Redis = await import('ioredis');
-    // ioredis default export é a classe
+    const Redis = await import("ioredis");
     // @ts-ignore
     redisClient = new Redis.default ? new Redis.default(REDIS_URL) : new Redis(REDIS_URL);
   }
-} catch (err) {
-  // Falha ao conectar ao Redis — continuar sem Redis
+} catch {
   redisClient = null;
 }
 
 export async function getPosts(): Promise<Post[]> {
-  const cacheKey = 'posts';
-  // 1) tentar cache em memória
-  if (postsCache.has(cacheKey)) {
-    return postsCache.get(cacheKey)!;
+  const cacheKey = "posts";
+
+  // 1) tentar cache em memoria
+  if (postsCache && Date.now() < postsCacheExpiresAt) {
+    return postsCache;
   }
 
-  // 2) tentar cache em Redis se disponível
+  // 2) tentar cache em Redis se disponivel
   if (redisClient) {
     try {
       const raw = await redisClient.get(cacheKey);
       if (raw) {
         const parsed = JSON.parse(raw) as Post[];
-        // popular cache em memória também
-        postsCache.set(cacheKey, parsed);
+        postsCache = parsed;
+        postsCacheExpiresAt = Date.now() + CACHE_TTL_MS;
         return parsed;
       }
-    } catch (e) {
+    } catch {
       // ignore redis errors and fallback
     }
   }
@@ -166,31 +169,32 @@ export async function getPosts(): Promise<Post[]> {
 
   const posts: Post[] = data.items.map((post: any) => mapToPost(post));
 
-  postsCache.set(cacheKey, posts);
+  postsCache = posts;
+  postsCacheExpiresAt = Date.now() + CACHE_TTL_MS;
 
-  // também salva no Redis com TTL (ex: 3600s = 1h)
+  // 3) salvar em Redis com TTL (quando disponivel)
   if (redisClient) {
     try {
-      await redisClient.set(cacheKey, JSON.stringify(posts), 'EX', 3600);
-      // opcional: salvar posts individuais
+      const ttl = Math.max(30, CACHE_TTL_SECONDS);
+      await redisClient.set(cacheKey, JSON.stringify(posts), "EX", ttl);
       for (const p of posts) {
-        await redisClient.set(`post:${p.id}`, JSON.stringify(p), 'EX', 3600);
+        await redisClient.set(`post:${p.id}`, JSON.stringify(p), "EX", ttl);
         if (p.slug) {
-          await redisClient.set(`post:slug:${p.slug}`, JSON.stringify(p), 'EX', 3600);
+          await redisClient.set(`post:slug:${p.slug}`, JSON.stringify(p), "EX", ttl);
         }
       }
-    } catch (e) {
+    } catch {
       // ignore
     }
   }
+
   return posts;
 }
 
 export async function getPost(id: string): Promise<Post | null> {
-  // tenta achar no cache
-  // 1) checar cache em memória primeiro
-  for (const val of postsCache.values()) {
-    const found = val.find((p) => p.id === id || p.slug === id);
+  // 1) checar cache em memoria primeiro
+  if (postsCache && Date.now() < postsCacheExpiresAt) {
+    const found = postsCache.find((p) => p.id === id || p.slug === id);
     if (found) return found;
   }
 
@@ -201,12 +205,12 @@ export async function getPost(id: string): Promise<Post | null> {
       if (byId) return JSON.parse(byId) as Post;
       const bySlug = await redisClient.get(`post:slug:${id}`);
       if (bySlug) return JSON.parse(bySlug) as Post;
-    } catch (e) {
+    } catch {
       // ignore
     }
   }
 
-  // 3) buscar post individual para garantir conteúdo completo
+  // 3) tentar buscar post individual por id
   try {
     const res = await fetch(
       `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/${id}?key=${API_KEY}`
@@ -216,25 +220,23 @@ export async function getPost(id: string): Promise<Post | null> {
       const mapped = mapToPost(data);
       if (redisClient) {
         try {
-          await redisClient.set(`post:${mapped.id}`, JSON.stringify(mapped), "EX", 3600);
+          const ttl = Math.max(30, CACHE_TTL_SECONDS);
+          await redisClient.set(`post:${mapped.id}`, JSON.stringify(mapped), "EX", ttl);
           if (mapped.slug) {
-            await redisClient.set(`post:slug:${mapped.slug}`, JSON.stringify(mapped), "EX", 3600);
+            await redisClient.set(`post:slug:${mapped.slug}`, JSON.stringify(mapped), "EX", ttl);
           }
-        } catch (e) {
+        } catch {
           // ignore
         }
       }
       return mapped;
     }
-  } catch (e) {
+  } catch {
     // ignore and fallback
   }
 
-  // 4) fallback para buscar todos e procurar
+  // 4) fallback: buscar lista e localizar por id/slug
   const posts = await getPosts();
   const found = posts.find((p) => p.id === id || p.slug === id);
   return found || null;
 }
-
-
-
