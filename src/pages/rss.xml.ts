@@ -4,7 +4,7 @@ import { getPosts } from "../lib/blogger";
 const siteUrl = import.meta.env.SITE_URL || "https://example.com";
 
 export const GET: APIRoute = async () => {
-  const posts = await getPosts();
+  const posts = await getPosts((Astro as any).locals?.runtime?.env);
 
   const items = posts
     .map(

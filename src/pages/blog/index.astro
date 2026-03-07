@@ -4,7 +4,8 @@ import PostCard from "../../components/PostCard.astro";
 import Search from "../../components/Search";
 import { getPosts } from "../../lib/blogger";
 
-const posts = await getPosts();
+const runtimeEnv = Astro.locals?.runtime?.env;
+const posts = await getPosts(runtimeEnv);
 ---
 
 <Layout title="Blog | Caf\u00e9 Com F\u00e9">

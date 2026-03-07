@@ -70,9 +70,24 @@ function extractSlug(url: string) {
   return url.split("/").pop()?.replace(".html", "");
 }
 
-const BLOG_ID = import.meta.env.BLOG_ID;
-const API_KEY = import.meta.env.BLOGGER_KEY;
-const CACHE_TTL_SECONDS = Number(import.meta.env.POSTS_CACHE_TTL_SECONDS ?? "120");
+type RuntimeEnv = Record<string, unknown> | undefined;
+
+function readEnv(name: string, runtimeEnv?: RuntimeEnv): string | undefined {
+  const runtimeValue = runtimeEnv?.[name];
+  if (typeof runtimeValue === "string" && runtimeValue.length > 0) return runtimeValue;
+
+  const buildValue = (import.meta as any)?.env?.[name];
+  if (typeof buildValue === "string" && buildValue.length > 0) return buildValue;
+
+  if (typeof process !== "undefined") {
+    const processValue = process.env?.[name];
+    if (typeof processValue === "string" && processValue.length > 0) return processValue;
+  }
+
+  return undefined;
+}
+
+const CACHE_TTL_SECONDS = Number((import.meta as any).env.POSTS_CACHE_TTL_SECONDS ?? "120");
 const CACHE_TTL_MS = Math.max(15, CACHE_TTL_SECONDS) * 1000;
 
 function mapToPost(post: any): Post {
@@ -129,8 +144,15 @@ try {
   redisClient = null;
 }
 
-export async function getPosts(): Promise<Post[]> {
+export async function getPosts(runtimeEnv?: RuntimeEnv): Promise<Post[]> {
   const cacheKey = "posts";
+  const BLOG_ID = readEnv("BLOG_ID", runtimeEnv);
+  const API_KEY = readEnv("BLOGGER_KEY", runtimeEnv);
+
+  if (!BLOG_ID || !API_KEY) {
+    console.error("[blogger] BLOG_ID ou BLOGGER_KEY ausentes.");
+    return [];
+  }
 
   // 1) tentar cache em memoria
   if (postsCache && Date.now() < postsCacheExpiresAt) {
@@ -191,7 +213,15 @@ export async function getPosts(): Promise<Post[]> {
   return posts;
 }
 
-export async function getPost(id: string): Promise<Post | null> {
+export async function getPost(id: string, runtimeEnv?: RuntimeEnv): Promise<Post | null> {
+  const BLOG_ID = readEnv("BLOG_ID", runtimeEnv);
+  const API_KEY = readEnv("BLOGGER_KEY", runtimeEnv);
+
+  if (!BLOG_ID || !API_KEY) {
+    console.error("[blogger] BLOG_ID ou BLOGGER_KEY ausentes.");
+    return null;
+  }
+
   // 1) checar cache em memoria primeiro
   if (postsCache && Date.now() < postsCacheExpiresAt) {
     const found = postsCache.find((p) => p.id === id || p.slug === id);
@@ -236,7 +266,7 @@ export async function getPost(id: string): Promise<Post | null> {
   }
 
   // 4) fallback: buscar lista e localizar por id/slug
-  const posts = await getPosts();
+  const posts = await getPosts(runtimeEnv);
   const found = posts.find((p) => p.id === id || p.slug === id);
   return found || null;
 }

@@ -5,7 +5,8 @@ import { getPosts } from "../../lib/blogger";
 import { Menu, X, Home, BookOpen, User, LogOut } from "lucide-astro";
 import { Image } from "astro:assets";
 
-const posts = await getPosts();
+const runtimeEnv = Astro.locals?.runtime?.env;
+const posts = await getPosts(runtimeEnv);
 
 const menuItems = [
   { label: "In\u00edcio", href: "/" },

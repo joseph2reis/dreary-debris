@@ -4,7 +4,8 @@ import PostCard from "../../../components/PostCard.astro";
 import { getPosts } from "../../../lib/blogger";
 
 const { tag } = Astro.params;
-const posts = (await getPosts()).filter((p) => (p as any).labels?.includes(tag));
+const runtimeEnv = Astro.locals?.runtime?.env;
+const posts = (await getPosts(runtimeEnv)).filter((p) => (p as any).labels?.includes(tag));
 ---
 
 <Layout title={`Posts sobre ${tag}`}>

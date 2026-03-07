@@ -9,7 +9,8 @@ import Comments from "../../components/Comments.astro";
 import { Image } from "astro:assets";
 
 const slug = Astro.params.slug ?? "";
-const post = await getPost(slug);
+const runtimeEnv = Astro.locals?.runtime?.env;
+const post = await getPost(slug, runtimeEnv);
 
 if (!post) return Astro.redirect("/404");
 
@@ -108,7 +109,7 @@ const SITE_URL = import.meta.env.SITE_URL || "";
       <Fragment set:html={typedPost.content} />
     </ProseContent>
 
-    <RelatedPosts currentId={typedPost.id} posts={await getPosts()} />
+    <RelatedPosts currentId={typedPost.id} posts={await getPosts(runtimeEnv)} />
 
     <Comments postId={typedPost.id} />
   </article>
