@@ -11,7 +11,7 @@
   --color-primary-hover: #a86f3f;
   --color-primary-glow: rgba(193, 138, 82, 0.3);
   --color-surface-solid: #191411;
-  
+
 }
 
 /* LIGHT MODE */
@@ -29,11 +29,27 @@
 
 @layer base {
   html {
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
   }
 
-  *, ::after, ::before {
-    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  *,
+  ::after,
+  ::before {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  html.theme-transition *,
+  html.theme-transition ::after,
+  html.theme-transition ::before {
+    transition:
+      background-color 0.25s ease,
+      border-color 0.25s ease,
+      color 0.25s ease,
+      fill 0.25s ease,
+      stroke 0.25s ease,
+      transform 0.25s ease,
+      opacity 0.25s ease !important;
   }
 }
 
