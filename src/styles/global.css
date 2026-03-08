@@ -32,6 +32,10 @@
 }
 
 @layer base {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
 
   *,
   ::after,

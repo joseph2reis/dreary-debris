@@ -1,4 +1,5 @@
 ---
+import { ClientRouter } from "astro:transitions";
 import Header from "../components/layouts/Header.astro";
 import Footer from "../components/layouts/Footer.astro";
 import "../styles/global.css";
@@ -81,11 +82,12 @@ const canonicalUrl =
   </head>
 
   <body class="bg-bg">
-    <Header />
+    <ClientRouter />
+    <Header transition:persist />
     <main class="min-h-screen">
       <slot />
     </main>
-    <Footer />
+    <Footer transition:persist />
   </body>
 </html>
 
