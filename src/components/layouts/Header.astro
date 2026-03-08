@@ -289,11 +289,19 @@ const isAdminRoute = pathname.startsWith("/admin");
     });
   }
 
-  document.addEventListener("astro:page-load", () => {
+  function bootstrapHeader() {
     initMobileMenu();
     initAdminSessionMenu();
     syncAdminSession();
-  });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bootstrapHeader, { once: true });
+  } else {
+    bootstrapHeader();
+  }
+
+  document.addEventListener("astro:page-load", bootstrapHeader);
 
   if (!sessionWindow.__adminSessionListenersBound) {
     window.addEventListener("storage", syncAdminSession);

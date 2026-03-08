@@ -347,5 +347,15 @@ const API_BASE = "https://comentario-api.josenildo2reis.workers.dev";
       .replaceAll("'", "&#039;");
   }
 
-  document.addEventListener("astro:page-load", initAdminPage);
+  function bootstrapAdminPage() {
+    initAdminPage();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bootstrapAdminPage, { once: true });
+  } else {
+    bootstrapAdminPage();
+  }
+
+  document.addEventListener("astro:page-load", bootstrapAdminPage);
 </script>
