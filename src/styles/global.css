@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
- html {
-    scroll-behavior: smooth;
-  }
+html {
+  scroll-behavior: smooth;
+}
 
 @theme {
   --font-sans: "Inter", stroke-sans, system-ui, -apple-system, sans-serif;
@@ -32,17 +32,6 @@
 }
 
 @layer base {
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation: none !important;
-  }
-
-  *,
-  ::after,
-  ::before {
-    transition: none !important;
-    animation: none !important;
-  }
 
   html.theme-transition *,
   html.theme-transition ::after,

@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview",
+    "preview": "wrangler dev ./dist/_worker.js/index.js --assets ./dist --compatibility-date 2026-03-22 --compatibility-flags nodejs_compat",
+    "cf:dev": "wrangler dev ./dist/_worker.js/index.js --assets ./dist --compatibility-date 2026-03-22 --compatibility-flags nodejs_compat",
     "astro": "astro"
   },
   "dependencies": {

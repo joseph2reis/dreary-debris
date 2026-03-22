@@ -21,7 +21,7 @@ O site consome posts do Blogger, possui busca local, pagina de contato, area adm
 - Comentarios com moderacao
 - Painel `/admin` para aprovar ou rejeitar comentarios
 - Paginas `/sobre`, `/contato`, `/termos` e `/privacidade`
-- RSS e sitemap
+- RSS, sitemap e robots.txt
 - Tema claro/escuro
 
 ## Estrutura
@@ -58,6 +58,7 @@ POSTS_CACHE_TTL_SECONDS=120
 - `BLOGGER_KEY`: chave da API do Blogger
 - `REDIS_URL`: cache opcional para posts
 - `SITE_URL`: URL publica usada em canonical, RSS e sitemap
+- `robots.txt`: liberado para indexacao publica e bloqueando apenas `/admin`
 - `POSTS_CACHE_TTL_SECONDS`: tempo de cache em segundos para posts no SSR (padrao: 120)
 
 ## Comandos
@@ -67,7 +68,10 @@ npm install
 npm run dev
 npm run build
 npm run preview
+npm run cf:dev
 ```
+
+`npm run preview` e `npm run cf:dev` usam `wrangler dev ./dist/_worker.js/index.js --assets ./dist --compatibility-flags nodejs_compat`, que e o fluxo correto para testar o projeto com `@astrojs/cloudflare` em SSR.
 
 ## Rotas Principais
 

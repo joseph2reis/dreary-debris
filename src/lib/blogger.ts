@@ -70,6 +70,10 @@ function extractSlug(url: string) {
   return url.split("/").pop()?.replace(".html", "");
 }
 
+function ensureAccessibleImages(html: string) {
+  return html.replace(/<img\b(?![^>]*\balt=)([^>]*)>/gi, '<img alt=""$1>');
+}
+
 type RuntimeEnv = Record<string, unknown> | undefined;
 
 function readEnv(name: string, runtimeEnv?: RuntimeEnv): string | undefined {
@@ -102,18 +106,19 @@ function mapToPost(post: any): Post {
       });
 
   const rawContent = post.content || "";
+  const content = ensureAccessibleImages(rawContent);
 
   return {
     id: post.id,
     slug: extractSlug(post.url) || post.id,
     title: post.title,
-    description: buildExcerpt(rawContent, 170),
-    image: extractImage(rawContent),
+    description: buildExcerpt(content, 170),
+    image: extractImage(content),
     date,
-    readingTime: estimateReadingTime(rawContent),
+    readingTime: estimateReadingTime(content),
     labels: post.labels || [],
     publishedAt,
-    content: rawContent,
+    content,
     author: {
       displayName: post.author?.displayName || "",
       image: post.author?.image,
